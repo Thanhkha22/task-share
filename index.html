@@ -459,35 +459,47 @@
                 reader.readAsText(file);
                 e.target.value = '';
             },
-            shareData: async () => {
-                if (Object.keys(tasks).length === 0) {
-                    alert('Không có dữ liệu để chia sẻ.');
-                    return;
-                }
-                try {
-                    const response = await fetch('https://api.npoint.io/', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(tasks)
-                    });
-                    const result = await response.json();
-                    if (result && result.url) {
-                        const id = result.url.split('/').pop();
-                        const shareUrl = `${window.location.origin}${window.location.pathname}?id=${id}`;
-                        prompt('Sao chép link chia sẻ này:', shareUrl);
-                    } else {
-                        alert('Tạo link thất bại, vui lòng thử lại.');
-                    }
-                } catch (error) {
-                    alert('Lỗi kết nối: ' + error.message);
-                }
-            },
+           shareData: async () => {
+        
+            if (Object.keys(tasks).length === 0) {
+                alert("Không có dữ liệu để chia sẻ");
+                return;
+            }
+        
+            try {
+        
+                const res = await fetch(
+                "https://task-share-si9j.onrender.com/api/share",
+                {
+                    method:"POST",
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+                    body:JSON.stringify(tasks)
+                });
+        
+                const data = await res.json();
+        
+                const shareUrl =
+                window.location.origin +
+                window.location.pathname +
+                "?id=" + data.id;
+        
+                prompt("Sao chép link chia sẻ:",shareUrl);
+        
+            } catch(err){
+        
+                alert("Lỗi tạo link: "+err.message);
+        
+            }
+        
+        },
             loadSharedData: async () => {
                 const urlParams = new URLSearchParams(window.location.search);
                 const id = urlParams.get('id');
                 if (!id) return;
                 try {
-                    const response = await fetch(`https://api.npoint.io/${id}`);
+                    const response = await fetch(`https://task-share-si9j.onrender.com/api/share/${id}`);
                     if (response.ok) {
                         const data = await response.json();
                         if (typeof data === 'object' && data !== null) {
@@ -529,54 +541,10 @@
         }
         init();
     })();
-    const API =
-    "https://task-share-si9j.onrender.com";
     
-    async function shareData(tasks){
-    
-    const res = await fetch(
-    API + "/api/share",
-    {
-    method:"POST",
-    headers:{
-    "Content-Type":"application/json"
-    },
-    body:JSON.stringify(tasks)
-    });
-    
-    const data = await res.json();
-    
-    const url =
-    location.origin +
-    location.pathname +
-    "?id=" + data.id;
-    
-    prompt("Copy link:",url);
-    
-    }
-    async function loadShare(){
-    
-    const params = new URLSearchParams(location.search);
-    
-    const id = params.get("id");
-    
-    if(!id) return;
-    
-    const res = await fetch(
-    API + "/api/share/" + id
-    );
-    
-    const data = await res.json();
-    
-    tasks = data;
-    
-    renderTasks();
-    
-    }
-    
-    loadShare();
 </script>
 </body>
 
 </html>
+
 
