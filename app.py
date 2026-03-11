@@ -43,6 +43,10 @@ def get_share(id):
         return jsonify({"error":"not found"}),404
 
     return jsonify(json.loads(row["data"]))
+    
+@app.route("/")
+def home():
+    return {"status": "server running"}
 
 
 if __name__ == "__main__":
@@ -57,5 +61,6 @@ if __name__ == "__main__":
     """)
 
     conn.commit()
+
 
     app.run()
