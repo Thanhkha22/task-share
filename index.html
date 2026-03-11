@@ -426,6 +426,11 @@
                     }
                     if (newRows.length > 0) {
                         if (!tasks[currentMainKey]) tasks[currentMainKey] = {};
+                        if (currentSubName === "TẤT CẢ") {
+                            alert("Vui lòng chọn menu con trước khi nhập Excel.");
+                            return;
+                        }
+                        
                         tasks[currentMainKey][currentSubName] = { headers, rows: newRows };
                         saveToLocalStorage();
                         alert(`Đã nạp ${newRows.length} dòng vào menu "${currentSubName}".`);
@@ -460,7 +465,7 @@
                 e.target.value = '';
             },
            shareData: async () => {
-        
+
             if (Object.keys(tasks).length === 0) {
                 alert("Không có dữ liệu để chia sẻ");
                 return;
@@ -469,52 +474,81 @@
             try {
         
                 const res = await fetch(
-                "https://task-share-si9j.onrender.com/api/share",
-                {
-                    method:"POST",
-                    headers:{
-                        "Content-Type":"application/json"
-                    },
-                    body:JSON.stringify(tasks)
-                });
+                    "https://task-share-si9j.onrender.com/api/share",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(tasks)
+                    }
+                );
+        
+                if (!res.ok) {
+                    throw new Error("Server không phản hồi");
+                }
         
                 const data = await res.json();
         
+                if (!data.id) {
+                    throw new Error("Không tạo được link");
+                }
+        
                 const shareUrl =
-                window.location.origin +
-                window.location.pathname +
-                "?id=" + data.id;
+                    window.location.origin +
+                    window.location.pathname +
+                    "?id=" + data.id;
         
-                prompt("Sao chép link chia sẻ:",shareUrl);
+                navigator.clipboard.writeText(shareUrl);
         
-            } catch(err){
+                alert("Đã tạo link và copy vào clipboard:\n" + shareUrl);
         
-                alert("Lỗi tạo link: "+err.message);
+            } catch (err) {
+        
+                alert("Lỗi tạo link: " + err.message);
         
             }
         
         },
             loadSharedData: async () => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const id = urlParams.get('id');
-                if (!id) return;
-                try {
-                    const response = await fetch(`https://task-share-si9j.onrender.com/api/share/${id}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (typeof data === 'object' && data !== null) {
-                            tasks = data;
-                            saveToLocalStorage();
-                            // Sau khi tải, chuyển về menu mặc định
-                            handlers.selectMain("Sở");
-                        }
-                    } else {
-                        console.warn('Không tìm thấy dữ liệu chia sẻ.');
-                    }
-                } catch (error) {
-                    console.error('Lỗi tải dữ liệu chia sẻ:', error);
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+
+            if (!id) return false;
+
+            try {
+
+                const response = await fetch(
+                    `https://task-share-si9j.onrender.com/api/share/${id}`
+                );
+
+                if (!response.ok) {
+                    throw new Error("Không tìm thấy dữ liệu chia sẻ");
                 }
-            },
+
+                const data = await response.json();
+
+                if (typeof data === 'object' && data !== null) {
+
+                    tasks = data;
+
+                    saveToLocalStorage();
+
+                    handlers.selectMain("Sở");
+
+                    return true;
+                }
+
+            } catch (error) {
+
+                console.error('Lỗi tải dữ liệu chia sẻ:', error);
+
+            }
+
+            return false;
+
+        },
             clearAllData: () => {
                 if (confirm('Xóa toàn bộ dữ liệu?')) { tasks = {}; saveToLocalStorage(); render.subMenu(); render.all(); }
             }
@@ -524,21 +558,24 @@
 
         // ==================== KHỞI TẠO ====================
         async function init() {
-            // Ưu tiên tải dữ liệu từ link chia sẻ nếu có
-            await handlers.loadSharedData();
-            // Nếu không có, tải từ localStorage
-            if (Object.keys(tasks).length === 0) {
-                loadFromLocalStorage();
-            }
-            render.mainMenu();
-            handlers.selectMain("Sở");
-            
-            document.getElementById('excelInput').addEventListener('change', handlers.handleExcelUpload);
-            document.getElementById('exportBtn').addEventListener('click', handlers.exportData);
-            document.getElementById('importInput').addEventListener('change', handlers.importData);
-            document.getElementById('shareBtn').addEventListener('click', handlers.shareData);
-            document.getElementById('clearBtn').addEventListener('click', handlers.clearAllData);
+
+        const loadedFromShare = await handlers.loadSharedData();
+
+        if (!loadedFromShare) {
+            loadFromLocalStorage();
         }
+
+        render.mainMenu();
+
+        handlers.selectMain("Sở");
+
+        document.getElementById('excelInput').addEventListener('change', handlers.handleExcelUpload);
+        document.getElementById('exportBtn').addEventListener('click', handlers.exportData);
+        document.getElementById('importInput').addEventListener('change', handlers.importData);
+        document.getElementById('shareBtn').addEventListener('click', handlers.shareData);
+        document.getElementById('clearBtn').addEventListener('click', handlers.clearAllData);
+
+    }
         init();
     })();
     
@@ -546,5 +583,6 @@
 </body>
 
 </html>
+
 
 
