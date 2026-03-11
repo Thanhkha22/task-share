@@ -11,6 +11,10 @@ def db():
     conn = sqlite3.connect("data.db")
     conn.row_factory = sqlite3.Row
     return conn
+    
+@app.route("/")
+def home():
+    return jsonify({"status": "Server is running", "message": "API Task Management is ready!"})
 
 @app.route("/api/share", methods=["POST"])
 def create_share():
@@ -59,3 +63,4 @@ if __name__ == "__main__":
     conn.commit()
 
     app.run()
+
