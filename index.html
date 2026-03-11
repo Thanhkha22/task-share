@@ -529,7 +529,54 @@
         }
         init();
     })();
+    const API =
+    "https://task-share-si9j.onrender.com";
+    
+    async function shareData(tasks){
+    
+    const res = await fetch(
+    API + "/api/share",
+    {
+    method:"POST",
+    headers:{
+    "Content-Type":"application/json"
+    },
+    body:JSON.stringify(tasks)
+    });
+    
+    const data = await res.json();
+    
+    const url =
+    location.origin +
+    location.pathname +
+    "?id=" + data.id;
+    
+    prompt("Copy link:",url);
+    
+    }
+    async function loadShare(){
+    
+    const params = new URLSearchParams(location.search);
+    
+    const id = params.get("id");
+    
+    if(!id) return;
+    
+    const res = await fetch(
+    API + "/api/share/" + id
+    );
+    
+    const data = await res.json();
+    
+    tasks = data;
+    
+    renderTasks();
+    
+    }
+    
+    loadShare();
 </script>
 </body>
 
 </html>
+
